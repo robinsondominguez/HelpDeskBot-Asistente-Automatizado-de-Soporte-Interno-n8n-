@@ -1,0 +1,1818 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        0
+      ],
+      "id": "746cc68f-595f-4074-aa6f-0af1c2f33f57",
+      "name": "Telegram Trigger",
+      "webhookId": "45d93780-78c1-4bd4-a9aa-fb8293db2c0f",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ",
+          "mode": "list",
+          "cachedResultName": "HelpDeskBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 172722038,
+          "mode": "list",
+          "cachedResultName": "USUARIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit#gid=172722038"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "telegram_user",
+              "lookupValue": "={{ $json.message.from.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "12466e96-bdda-4d00-aaf6-09301b21586c",
+      "name": "Buscar Usuario",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pGHXC0qIrRRW5xFc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1fb7877-1583-4864-937a-32107e3e516b",
+              "leftValue": "={{ $json.activo }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "20406f80-b2f8-4e24-bc6f-ec1656ae627a",
+              "leftValue": "={{ $json.telegram_user }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        0
+      ],
+      "id": "3244c505-5dd2-4783-b505-5a6eabb88f67",
+      "name": "Usuario Activo?"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "No tienes acceso al sistema.  Si crees que esto es un error, contacta con el administrador para activar tu cuenta.",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "beb0f9a0-d367-46c4-a330-730cc115e244",
+      "name": "Sin acceso",
+      "webhookId": "1494fad0-1793-4744-aca4-96d30bbbd072",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trigger = $('Telegram Trigger').item.json;\nconst mensaje = trigger.message.text.trim();\nconst chat_id = trigger.message.chat.id;\nconst telegram_user = trigger.message.from.id;\n\nconst sd = $getWorkflowStaticData('global');\nsd['estado'] = sd['estado'] || 'MENU';\nsd['datos'] = sd['datos'] || {};\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    mensaje: mensaje,\n    datos: sd['datos'],\n    chat_id: chat_id,\n    telegram_user: telegram_user\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "c786dd4e-4d40-4b22-bbd3-564841cede05",
+      "name": "Obtener Estado Sesión"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "Soporte Tecnico",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f9f66897-76c9-4e01-8a33-1d1e080f9930"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2267854e-0948-4152-a44e-33fb555008ee",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "Solicitud Administrativa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "36acd7e0-a534-42ac-be8d-b13136ec42b1",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "Consulta General",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c04a3bec-71fd-4013-b317-9b455752bbf3",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "Cancelar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        -448
+      ],
+      "id": "7b24d35c-109f-4222-99ef-ea8f75f3df16",
+      "name": "Router Tipo Solicitud"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nconst tipos = {\n  '1': 'Soporte técnico',\n  '2': 'Solicitud administrativa',\n  '3': 'Consulta general'\n};\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['tipo'] = tipos[mensaje];\nsd['estado'] = 'PRIORIDAD';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    mensaje: `✅ Tipo seleccionado: *${sd['datos']['tipo']}*`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -432
+      ],
+      "id": "a3435c26-9448-4944-b744-89ab8fe2062d",
+      "name": "Guardar Tipo"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}  Ahora selecciona la prioridad de tu solicitud:  1. 🔴 Alta 2. 🟡 Media 3. 🟢 Baja  9. Cancelar",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        -432
+      ],
+      "id": "3fbe1f35-a414-46cf-a487-d9d075b32197",
+      "name": "Pedir Prioridad",
+      "webhookId": "0ea9b975-5221-43f0-a3f3-87bdef97f3f4",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.estado }}",
+                    "rightValue": "MENU",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "29d82648-07c3-421b-9a61-c0ff61a7e8ae"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c508105f-9ebb-4034-8973-10267e869670",
+                    "leftValue": "={{ $json.estado }}",
+                    "rightValue": "TIPO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e024613d-c732-4ac3-a819-264ac6500b32",
+                    "leftValue": "={{ $json.estado }}",
+                    "rightValue": "PRIORIDAD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "978a0479-8806-48e1-8f27-bd7bcc0fa236",
+                    "leftValue": "={{ $json.estado }}",
+                    "rightValue": "DESCRIPCION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2574479d-1ef7-480b-a4a2-32976c03519d",
+                    "leftValue": "={{ $json.estado }}",
+                    "rightValue": "CONFIRMACION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -96
+      ],
+      "id": "16975138-e17b-4259-997a-308a47e62bf9",
+      "name": "Router de estado"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c81cb60c-de82-4959-9304-32465acbaea3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Crear Solicitud"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0f203b03-c401-478e-b075-ea6b78f9e194",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Consultar Estado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d0998152-e11c-444b-aec7-4f9fcdabdc88",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Mis Solicitudes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "962af059-6825-4369-9613-dc72c76dbada",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reportes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5813097c-5fc6-496d-9826-81c3467e564a",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "0",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ayuda"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        -512
+      ],
+      "id": "9c5b528c-ade5-4b09-b7f4-54ef98dd24de",
+      "name": "Router Menu Principal"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nconst prioridades = {\n  '1': 'Alta',\n  '2': 'Media',\n  '3': 'Baja'\n};\n\nif (mensaje === '9') {\n  sd['estado'] = 'MENU';\n  sd['datos'] = {};\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: {},\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: true,\n      invalido: false,\n      mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n    }\n  }];\n}\n\nif (!prioridades[mensaje]) {\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: sd['datos'],\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: false,\n      invalido: true,\n      mensaje: '⚠️ Opción no válida\\\\. Por favor escribe 1, 2, 3 o 9 para cancelar\\\\.'\n    }\n  }];\n}\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['prioridad'] = prioridades[mensaje];\nsd['estado'] = 'DESCRIPCION';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    cancelado: false,\n    invalido: false,\n    mensaje: `✅ Prioridad seleccionada: *${sd['datos']['prioridad']}*`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        176
+      ],
+      "id": "2809cafb-935f-4f23-9206-ed1a37339dd8",
+      "name": "Guardar Prioridad"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}  Ahora escribe una descripción detallada de tu solicitud.  💡 Sé lo más específico posible para que podamos ayudarte de forma más rápida y eficiente.  Escribe 9 para cancelar.",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1872,
+        176
+      ],
+      "id": "b712a091-485e-4482-a86e-1b127ade1325",
+      "name": "Pedir Descripcion",
+      "webhookId": "ba3c7eed-2186-4d57-ba84-20a516ccfdab",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nif (mensaje === '9') {\n  sd['estado'] = 'MENU';\n  sd['datos'] = {};\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: {},\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: true,\n      invalido: false,\n      mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n    }\n  }];\n}\n\nif (!mensaje || mensaje.trim().length < 5) {\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: sd['datos'],\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: false,\n      invalido: true,\n      mensaje: '⚠️ La descripción es muy corta\\\\. Por favor sé más específico\\\\.'\n    }\n  }];\n}\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['descripcion'] = mensaje.trim();\nsd['estado'] = 'CONFIRMACION';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    cancelado: false,\n    invalido: false,\n    mensaje: '✅ Descripción registrada\\\\.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        432
+      ],
+      "id": "85b8d8d8-43d8-463b-8633-2c84df83652f",
+      "name": "Guardar Descripcion"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=📋 *Resumen de tu solicitud:*  🏷️ *Tipo:* {{ $json.datos.tipo }} ⚡ *Prioridad:* {{ $json.datos.prioridad }} 📝 *Descripción:* {{ $json.datos.descripcion }}  ¿Deseas confirmar y enviar la solicitud?  1\\. ✅ Confirmar 2\\. ❌ Cancelar",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        416
+      ],
+      "id": "6eb27d78-d83c-4a29-961d-ea6ad02210c0",
+      "name": "Mostrar Confirmacion",
+      "webhookId": "e8aa46db-1099-4071-a90d-070a23728a00",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "59215033-f45c-49e2-9c22-2d06b883bd6c",
+              "leftValue": "={{ $json.mensaje }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "17ac62f9-e8a2-4519-a1c6-3b577a58b5cd",
+              "leftValue": "={{ $json.mensaje }}",
+              "rightValue": "2",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1184,
+        736
+      ],
+      "id": "a5e31ec5-4f00-4e32-9b2e-b5b9aacdf870",
+      "name": "Confirmar"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ",
+          "mode": "list",
+          "cachedResultName": "HelpDeskBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 462622936,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit#gid=462622936"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_ticket": "={{ 'TK-' + Date.now() }}",
+            "tipo": "={{ $json.datos.tipo }}",
+            "prioridad": "={{ $json.datos.prioridad }}",
+            "descripcion": "={{ $json.datos.descripcion }}",
+            "estado": "Abierto",
+            "creado_por": "={{ $json.telegram_user }}",
+            "fecha_creacion": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id_ticket",
+              "displayName": "id_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "creado_por",
+              "displayName": "creado_por",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_creacion",
+              "displayName": "fecha_creacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1472,
+        624
+      ],
+      "id": "c49498cf-b69d-4d18-87a9-c457a8235bfe",
+      "name": "Registrar Ticket",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pGHXC0qIrRRW5xFc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Obtener Estado Sesión').item.json.chat_id }}",
+        "text": "=🎉 *¡Tu solicitud ha sido registrada exitosamente\\!*  📋 *Detalles del ticket:* 🔖 *ID:* {{ $('Registrar Ticket').item.json.id_ticket }} 🏷️ *Tipo:* {{ $('Obtener Estado Sesión').item.json.datos.tipo }} ⚡ *Prioridad:* {{ $('Obtener Estado Sesión').item.json.datos.prioridad }} 📊 *Estado:* Abierto  Puedes consultar el estado de tu solicitud en cualquier momento con la opción *2* del menú\\.  Escribe cualquier número para volver al menú principal\\.",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1648,
+        624
+      ],
+      "id": "b6765ea7-b125-411c-889e-5a33877bfe64",
+      "name": "Notificar Exito",
+      "webhookId": "f059a030-3879-4ea3-908d-487e30bac0dd",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\n\nsd['estado'] = 'MENU';\nsd['datos'] = {};\n\nreturn [{\n  json: {\n    chat_id: $('Obtener Estado Sesión').item.json.chat_id,\n    telegram_user: $('Obtener Estado Sesión').item.json.telegram_user,\n    mensaje: 'Sesión limpiada correctamente'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        624
+      ],
+      "id": "a5bae6dd-cac2-4a96-b99b-baa6b835c473",
+      "name": "Limpiar Sesion"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\n\nsd['estado'] = 'MENU';\nsd['datos'] = {};\n\nreturn [{\n  json: {\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        752
+      ],
+      "id": "6d4a50fe-dca7-4339-8827-ad7ddc519994",
+      "name": "Cancelar Solicitud"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "❌ *Solicitud cancelada\\.*  Volviendo al menú principal\\.  Menú principal: 0\\. Ayuda 1\\. Crear solicitud 2\\. Consultar estado de solicitud 3\\. Mis solicitudes 4\\. Reportes 5\\. Configuración",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        752
+      ],
+      "id": "d926f4d8-dcd2-482e-a0e2-f37088b62941",
+      "name": "Cancelacion",
+      "webhookId": "bebda759-e95f-4013-8ef6-d11faea79df7",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ",
+          "mode": "list",
+          "cachedResultName": "HelpDeskBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 462622936,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit#gid=462622936"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "creado_por",
+              "lookupValue": "={{ $json.telegram_user }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1232,
+        -832
+      ],
+      "id": "e6acf792-af48-404e-bdad-20c6c0c0d73e",
+      "name": "Consultar Ticket",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pGHXC0qIrRRW5xFc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst chat_id = $('Obtener Estado Sesión').item.json.chat_id;\nconst items = $input.all().filter(i => i.json.estado !== 'Cerrado');\n\n// Si no hay tickets\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      chat_id: chat_id,\n      mensaje: '📭 No tienes solicitudes abiertas en este momento\\\\.\\n\\nEscribe *1* para crear una nueva solicitud\\\\.'\n    }\n  }];\n}\n\n// Formateamos la lista de tickets\nlet texto = '📋 *Tus solicitudes activas:*\\n\\n';\n\nfor (const item of items) {\n  const t = item.json;\n  texto += `🔖 *ID:* ${t.id_ticket}\\n`;\n  texto += `🏷️ *Tipo:* ${t.tipo}\\n`;\n  texto += `⚡ *Prioridad:* ${t.prioridad}\\n`;\n  texto += `📊 *Estado:* ${t.estado}\\n`;\n  texto += `📅 *Fecha:* ${t.fecha_creacion}\\n`;\n  texto += `\\n`;\n}\n\ntexto += 'Escribe cualquier número para volver al menú principal\\\\.';\n\nreturn [{\n  json: {\n    chat_id: chat_id,\n    mensaje: texto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -832
+      ],
+      "id": "da086e8a-23b7-4689-b5aa-2f7618f9c1d7",
+      "name": "Formatear Respuesta"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1648,
+        -832
+      ],
+      "id": "7fe046ad-5fb6-463d-ae4d-8b2e69329186",
+      "name": "Mostrar Ticket",
+      "webhookId": "67dff6b0-e11b-4a58-90e6-a1bb8e316ab6",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ",
+          "mode": "list",
+          "cachedResultName": "HelpDeskBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 462622936,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit#gid=462622936"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "creado_por",
+              "lookupValue": "={{ $json.telegram_user }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1264,
+        -608
+      ],
+      "id": "ffae1bd0-7804-469d-ac2c-a3f6e32b8003",
+      "name": "Mis Solicitudes",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pGHXC0qIrRRW5xFc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst chat_id = $('Obtener Estado Sesión').item.json.chat_id;\n\n// Si no hay tickets\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      chat_id: chat_id,\n      mensaje: '📭 Aún no tienes solicitudes registradas\\\\.\\n\\nEscribe *1* para crear tu primera solicitud\\\\.'\n    }\n  }];\n}\n\n// Formateamos la lista completa\nlet texto = `📋 *Todas tus solicitudes:* ${items.length} en total\\n\\n`;\n\nfor (const item of items) {\n  const t = item.json;\n\n  // Emoji según estado\n  const estadoEmoji = {\n    'Abierto': '🟡',\n    'En proceso': '🔵',\n    'Cerrado': '✅'\n  }[t.estado] || '⚪';\n\n  texto += `🔖 *ID:* ${t.id_ticket}\\n`;\n  texto += `🏷️ *Tipo:* ${t.tipo}\\n`;\n  texto += `⚡ *Prioridad:* ${t.prioridad}\\n`;\n  texto += `${estadoEmoji} *Estado:* ${t.estado}\\n`;\n  texto += `📅 *Fecha:* ${t.fecha_creacion}\\n`;\n  texto += `\\n`;\n}\n\ntexto += 'Escribe cualquier número para volver al menú principal\\\\.';\n\nreturn [{\n  json: {\n    chat_id: chat_id,\n    mensaje: texto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -608
+      ],
+      "id": "126f1f3b-1032-4fce-a0e9-301b3e7b5722",
+      "name": "Formatear mis Solicitudes"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        -608
+      ],
+      "id": "99fcf239-0a2c-4064-84ba-ff804248fd40",
+      "name": "Mostrar Mis Solicitudes",
+      "webhookId": "0d9b78bc-d7e2-4df1-a9a0-ca439b08fbe9",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ",
+          "mode": "list",
+          "cachedResultName": "HelpDeskBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1530064150,
+          "mode": "list",
+          "cachedResultName": "LOGS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CYGc5bgUQ2g4eCrxrLVg6unV8QGct7iUyLT1k9wXZIQ/edit#gid=1530064150"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ new Date().toISOString() }}",
+            "telegram_user": "={{ $('Obtener Estado Sesión').item.json.telegram_user }}",
+            "pantalla": "={{ $('Obtener Estado Sesión').item.json.estado }}",
+            "opcion": "={{ $('Obtener Estado Sesión').item.json.mensaje }}",
+            "resultado": "OK"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_user",
+              "displayName": "telegram_user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pantalla",
+              "displayName": "pantalla",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "opcion",
+              "displayName": "opcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resultado",
+              "displayName": "resultado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2672,
+        0
+      ],
+      "id": "c68cc871-b11f-43b8-870d-20caa55c9bab",
+      "name": "Guardar LOG",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pGHXC0qIrRRW5xFc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Hola, soy HelpDeskBot 👋  Estoy aquí para ayudarte con solicitudes de soporte de forma rápida y ordenada.  Por favor escribe el número de la opción que quieras usar.  Menú principal: 0. Ayuda 1. Crear solicitud 2. Consultar estado de solicitud 3. Mis solicitudes 4. Reportes 5. Configuración",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        -336
+      ],
+      "id": "fdcab686-1478-4079-af1b-678a7b8bf9ca",
+      "name": "Mostrar Menu",
+      "webhookId": "d1f4d375-0ab1-4fae-b615-69525f96b231",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "252d2891-66a8-4b12-bb90-ee335d1472df",
+              "leftValue": "={{ $json.cancelado }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a7abf577-8664-4b44-8b79-b7595745e15e",
+              "leftValue": "={{ $json.invalido }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        176
+      ],
+      "id": "0688d9e4-859a-4734-bb8c-e4e33a6d1828",
+      "name": "If Prioridad Valida"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4b2770c8-554b-4282-95cf-a6ba8ca08f93",
+              "leftValue": "={{ $json.cancelado }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        256
+      ],
+      "id": "72deeee8-0725-4db7-9e4a-2a1655935a58",
+      "name": "If Prioridad Cancelada"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "934df2db-b78b-4492-a606-6813d934f731",
+              "leftValue": "={{ $json.cancelado }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "e270ace4-e90f-4678-abce-eb391949323f",
+              "leftValue": "={{ $json.invalido }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        432
+      ],
+      "id": "e38dd218-49b7-49d6-842a-940abcf8b605",
+      "name": "If Descripcion invalida"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe9a5b4b-9ece-43c3-b639-4fd1836593b8",
+              "leftValue": "={{ $json.cancelado }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1648,
+        448
+      ],
+      "id": "ca67c8e7-3c21-454b-a340-edb0117b0fcf",
+      "name": "If Descripcion Cancelada"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Buscar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Usuario Activo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usuario Activo?": {
+      "main": [
+        [
+          {
+            "node": "Obtener Estado Sesión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sin acceso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Estado Sesión": {
+      "main": [
+        [
+          {
+            "node": "Router de estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Tipo Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Guardar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cancelar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Tipo": {
+      "main": [
+        [
+          {
+            "node": "Pedir Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router de estado": {
+      "main": [
+        [
+          {
+            "node": "Router Menu Principal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "Guardar Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mostrar Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Menu Principal": {
+      "main": [
+        [
+          {
+            "node": "Router Tipo Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mostrar Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mostrar Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Cancelar Solicitud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Prioridad Valida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Descripcion": {
+      "main": [
+        [
+          {
+            "node": "If Descripcion invalida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar": {
+      "main": [
+        [
+          {
+            "node": "Registrar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cancelar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Notificar Exito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Exito": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Sesion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Cancelacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Formatear mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar Mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Sesion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelacion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sin acceso": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar Menu": {
+      "main": [
+        [
+          {
+            "node": "Router Tipo Solicitud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Prioridad Valida": {
+      "main": [
+        [
+          {
+            "node": "Pedir Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Prioridad Cancelada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Descripcion invalida": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Descripcion Cancelada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Prioridad Cancelada": {
+      "main": [
+        [
+          {
+            "node": "Cancelar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Descripcion Cancelada": {
+      "main": [
+        [
+          {
+            "node": "Cancelar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "08429e5b-cb85-4b59-8922-0be05bbc8e45",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33e1f707557232a0786f09773635b73170017d76b32fdd653d46ac7e182a7790"
+  },
+  "id": "jpAB2NGJtVrXaBUD",
+  "tags": []
+}
