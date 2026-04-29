@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "HelpDeskBot — Fixed",
   "nodes": [
     {
       "parameters": {
@@ -136,7 +136,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const trigger = $('Telegram Trigger').item.json;\nconst mensaje = trigger.message.text.trim();\nconst chat_id = trigger.message.chat.id;\nconst telegram_user = trigger.message.from.id;\n\nconst sd = $getWorkflowStaticData('global');\nsd['estado'] = sd['estado'] || 'MENU';\nsd['datos'] = sd['datos'] || {};\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    mensaje: mensaje,\n    datos: sd['datos'],\n    chat_id: chat_id,\n    telegram_user: telegram_user\n  }\n}];"
+        "jsCode": "const trigger = $('Telegram Trigger').item.json;\nconst mensaje = trigger.message.text.trim();\nconst chat_id = trigger.message.chat.id;\nconst telegram_user = String(trigger.message.from.id);\n\nconst sd = $getWorkflowStaticData('global');\nif (!sd[telegram_user]) {\n  sd[telegram_user] = { estado: 'MENU', datos: {} };\n}\nconst session = sd[telegram_user];\n\nreturn [{\n  json: {\n    estado: session.estado,\n    mensaje: mensaje,\n    datos: session.datos,\n    chat_id: chat_id,\n    telegram_user: telegram_user\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,31 +161,9 @@
                 },
                 "conditions": [
                   {
+                    "id": "rt1",
                     "leftValue": "={{ $json.mensaje }}",
-                    "rightValue": "Soporte Tecnico",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "id": "f9f66897-76c9-4e01-8a33-1d1e080f9930"
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "2267854e-0948-4152-a44e-33fb555008ee",
-                    "leftValue": "={{ $json.mensaje }}",
-                    "rightValue": "Solicitud Administrativa",
+                    "rightValue": "1",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -206,9 +184,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "36acd7e0-a534-42ac-be8d-b13136ec42b1",
+                    "id": "rt2",
                     "leftValue": "={{ $json.mensaje }}",
-                    "rightValue": "Consulta General",
+                    "rightValue": "2",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -229,9 +207,32 @@
                 },
                 "conditions": [
                   {
-                    "id": "c04a3bec-71fd-4013-b317-9b455752bbf3",
+                    "id": "rt3",
                     "leftValue": "={{ $json.mensaje }}",
-                    "rightValue": "Cancelar",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "rt9",
+                    "leftValue": "={{ $json.mensaje }}",
+                    "rightValue": "9",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -259,7 +260,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nconst tipos = {\n  '1': 'Soporte técnico',\n  '2': 'Solicitud administrativa',\n  '3': 'Consulta general'\n};\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['tipo'] = tipos[mensaje];\nsd['estado'] = 'PRIORIDAD';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    mensaje: `✅ Tipo seleccionado: *${sd['datos']['tipo']}*`\n  }\n}];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $json.telegram_user;\nconst mensaje = $json.mensaje;\n\nconst tipos = {\n  '1': 'Soporte técnico',\n  '2': 'Solicitud administrativa',\n  '3': 'Consulta general'\n};\n\nif (!sd[telegram_user]) sd[telegram_user] = { estado: 'MENU', datos: {} };\nconst session = sd[telegram_user];\nsession.datos = session.datos || {};\nsession.datos.tipo = tipos[mensaje];\nsession.estado = 'PRIORIDAD';\n\nreturn [{\n  json: {\n    estado: session.estado,\n    datos: session.datos,\n    chat_id: $json.chat_id,\n    telegram_user: telegram_user,\n    mensaje: `\\u2705 Tipo seleccionado: *${session.datos.tipo}*`\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -572,7 +573,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nconst prioridades = {\n  '1': 'Alta',\n  '2': 'Media',\n  '3': 'Baja'\n};\n\nif (mensaje === '9') {\n  sd['estado'] = 'MENU';\n  sd['datos'] = {};\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: {},\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: true,\n      invalido: false,\n      mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n    }\n  }];\n}\n\nif (!prioridades[mensaje]) {\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: sd['datos'],\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: false,\n      invalido: true,\n      mensaje: '⚠️ Opción no válida\\\\. Por favor escribe 1, 2, 3 o 9 para cancelar\\\\.'\n    }\n  }];\n}\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['prioridad'] = prioridades[mensaje];\nsd['estado'] = 'DESCRIPCION';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    cancelado: false,\n    invalido: false,\n    mensaje: `✅ Prioridad seleccionada: *${sd['datos']['prioridad']}*`\n  }\n}];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $json.telegram_user;\nconst mensaje = $json.mensaje;\n\nconst prioridades = { '1': 'Alta', '2': 'Media', '3': 'Baja' };\n\nif (!sd[telegram_user]) sd[telegram_user] = { estado: 'MENU', datos: {} };\nconst session = sd[telegram_user];\n\nif (mensaje === '9') {\n  session.estado = 'MENU'; session.datos = {};\n  return [{ json: { estado: session.estado, datos: {}, chat_id: $json.chat_id,\n    telegram_user, cancelado: true, invalido: false,\n    mensaje: '\\u274c Solicitud cancelada\\\\\\\\. Volviendo al men\\u00fa principal\\\\\\\\.' } }];\n}\n\nif (!prioridades[mensaje]) {\n  return [{ json: { estado: session.estado, datos: session.datos, chat_id: $json.chat_id,\n    telegram_user, cancelado: false, invalido: true,\n    mensaje: '\\u26a0\\ufe0f Opci\\u00f3n no v\\u00e1lida\\\\\\\\. Por favor escribe 1, 2, 3 o 9 para cancelar\\\\\\\\.' } }];\n}\n\nsession.datos = session.datos || {};\nsession.datos.prioridad = prioridades[mensaje];\nsession.estado = 'DESCRIPCION';\n\nreturn [{ json: { estado: session.estado, datos: session.datos, chat_id: $json.chat_id,\n  telegram_user, cancelado: false, invalido: false,\n  mensaje: `\\u2705 Prioridad seleccionada: *${session.datos.prioridad}*` } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -609,7 +610,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst mensaje = $json.mensaje;\n\nif (mensaje === '9') {\n  sd['estado'] = 'MENU';\n  sd['datos'] = {};\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: {},\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: true,\n      invalido: false,\n      mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n    }\n  }];\n}\n\nif (!mensaje || mensaje.trim().length < 5) {\n  return [{\n    json: {\n      estado: sd['estado'],\n      datos: sd['datos'],\n      chat_id: $json.chat_id,\n      telegram_user: $json.telegram_user,\n      cancelado: false,\n      invalido: true,\n      mensaje: '⚠️ La descripción es muy corta\\\\. Por favor sé más específico\\\\.'\n    }\n  }];\n}\n\nsd['datos'] = sd['datos'] || {};\nsd['datos']['descripcion'] = mensaje.trim();\nsd['estado'] = 'CONFIRMACION';\n\nreturn [{\n  json: {\n    estado: sd['estado'],\n    datos: sd['datos'],\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    cancelado: false,\n    invalido: false,\n    mensaje: '✅ Descripción registrada\\\\.'\n  }\n}];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $json.telegram_user;\nconst mensaje = $json.mensaje;\n\nif (!sd[telegram_user]) sd[telegram_user] = { estado: 'MENU', datos: {} };\nconst session = sd[telegram_user];\n\nif (mensaje === '9') {\n  session.estado = 'MENU'; session.datos = {};\n  return [{ json: { estado: session.estado, datos: {}, chat_id: $json.chat_id,\n    telegram_user, cancelado: true, invalido: false,\n    mensaje: '\\u274c Solicitud cancelada\\\\\\\\. Volviendo al men\\u00fa principal\\\\\\\\.' } }];\n}\n\nif (!mensaje || mensaje.trim().length < 5) {\n  return [{ json: { estado: session.estado, datos: session.datos, chat_id: $json.chat_id,\n    telegram_user, cancelado: false, invalido: true,\n    mensaje: '\\u26a0\\ufe0f La descripci\\u00f3n es muy corta\\\\\\\\. Por favor s\\u00e9 m\\u00e1s espec\\u00edfico\\\\\\\\.' } }];\n}\n\nsession.datos = session.datos || {};\nsession.datos.descripcion = mensaje.trim();\nsession.estado = 'CONFIRMACION';\n\nreturn [{ json: { estado: session.estado, datos: session.datos, chat_id: $json.chat_id,\n  telegram_user, cancelado: false, invalido: false,\n  mensaje: '\\u2705 Descripci\\u00f3n registrada\\\\\\\\.' } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -827,7 +828,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\n\nsd['estado'] = 'MENU';\nsd['datos'] = {};\n\nreturn [{\n  json: {\n    chat_id: $('Obtener Estado Sesión').item.json.chat_id,\n    telegram_user: $('Obtener Estado Sesión').item.json.telegram_user,\n    mensaje: 'Sesión limpiada correctamente'\n  }\n}];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $('Obtener Estado Sesi\\u00f3n').item.json.telegram_user;\n\nsd[telegram_user] = { estado: 'MENU', datos: {} };\n\nreturn [{ json: {\n  chat_id: $('Obtener Estado Sesi\\u00f3n').item.json.chat_id,\n  telegram_user: telegram_user,\n  mensaje: 'Sesi\\u00f3n limpiada correctamente'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -840,7 +841,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\n\nsd['estado'] = 'MENU';\nsd['datos'] = {};\n\nreturn [{\n  json: {\n    chat_id: $json.chat_id,\n    telegram_user: $json.telegram_user,\n    mensaje: '❌ Solicitud cancelada\\\\. Volviendo al menú principal\\\\.'\n  }\n}];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $json.telegram_user;\n\nif (sd[telegram_user]) { sd[telegram_user] = { estado: 'MENU', datos: {} }; }\n\nreturn [{ json: {\n  chat_id: $json.chat_id,\n  telegram_user: telegram_user,\n  mensaje: '\\u274c Solicitud cancelada\\\\\\\\. Volviendo al men\\u00fa principal\\\\\\\\.'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -920,7 +921,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst chat_id = $('Obtener Estado Sesión').item.json.chat_id;\nconst items = $input.all().filter(i => i.json.estado !== 'Cerrado');\n\n// Si no hay tickets\nif (!items || items.length === 0) {\n  return [{\n    json: {\n      chat_id: chat_id,\n      mensaje: '📭 No tienes solicitudes abiertas en este momento\\\\.\\n\\nEscribe *1* para crear una nueva solicitud\\\\.'\n    }\n  }];\n}\n\n// Formateamos la lista de tickets\nlet texto = '📋 *Tus solicitudes activas:*\\n\\n';\n\nfor (const item of items) {\n  const t = item.json;\n  texto += `🔖 *ID:* ${t.id_ticket}\\n`;\n  texto += `🏷️ *Tipo:* ${t.tipo}\\n`;\n  texto += `⚡ *Prioridad:* ${t.prioridad}\\n`;\n  texto += `📊 *Estado:* ${t.estado}\\n`;\n  texto += `📅 *Fecha:* ${t.fecha_creacion}\\n`;\n  texto += `\\n`;\n}\n\ntexto += 'Escribe cualquier número para volver al menú principal\\\\.';\n\nreturn [{\n  json: {\n    chat_id: chat_id,\n    mensaje: texto\n  }\n}];"
+        "jsCode": "const chat_id = $('Obtener Estado Sesi\\u00f3n').item.json.chat_id;\nconst items = $input.all().filter(i => i.json.estado !== 'Cerrado');\n\nif (!items || items.length === 0) {\n  return [{ json: { chat_id: chat_id,\n    mensaje: '\\ud83d\\udcad No tienes solicitudes abiertas en este momento\\\\.\\n\\nEscribe *1* para crear una nueva solicitud\\\\.' } }];\n}\n\nlet texto = '\\ud83d\\udccb *Tus solicitudes activas:*\\n\\n';\nfor (const item of items) {\n  const t = item.json;\n  texto += `\\ud83d\\udd16 *ID:* ${t.id_ticket}\\n`;\n  texto += `\\ud83c\\udff7\\ufe0f *Tipo:* ${t.tipo}\\n`;\n  texto += `\\u26a1 *Prioridad:* ${t.prioridad}\\n`;\n  texto += `\\ud83d\\udcca *Estado:* ${t.estado}\\n`;\n  texto += `\\ud83d\\udcc5 *Fecha:* ${t.fecha_creacion}\\n\\n`;\n}\ntexto += 'Escribe cualquier n\\u00famero para volver al men\\u00fa principal\\\\.';\nreturn [{ json: { chat_id: chat_id, mensaje: texto } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1132,9 +1133,9 @@
     {
       "parameters": {
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "text": "Hola, soy HelpDeskBot 👋  Estoy aquí para ayudarte con solicitudes de soporte de forma rápida y ordenada.  Por favor escribe el número de la opción que quieras usar.  Menú principal: 0. Ayuda 1. Crear solicitud 2. Consultar estado de solicitud 3. Mis solicitudes 4. Reportes 5. Configuración",
+        "text": "Hola, soy HelpDeskBot \\ud83d\\udc4b\n\nEstoy aqu\\u00ed para ayudarte con solicitudes de soporte de forma r\\u00e1pida y ordenada\\.\n\nPor favor escribe el n\\u00famero de la opci\\u00f3n que quieras usar\\.\n\nMen\\u00fa principal:\n0\\. Ayuda\n1\\. Crear solicitud\n2\\. Consultar estado de solicitud\n3\\. Mis solicitudes\n4\\. Reportes\n5\\. Configuraci\\u00f3n",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "MarkdownV2"
         }
       },
       "type": "n8n-nodes-base.telegram",
@@ -1308,6 +1309,67 @@
       ],
       "id": "ca67c8e7-3c21-454b-a340-edb0117b0fcf",
       "name": "If Descripcion Cancelada"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst telegram_user = $json.telegram_user;\n\nif (!sd[telegram_user]) sd[telegram_user] = { estado: 'MENU', datos: {} };\nsd[telegram_user].estado = 'TIPO';\nsd[telegram_user].datos = {};\n\nreturn [{ json: {\n  chat_id: $json.chat_id,\n  telegram_user: telegram_user,\n  estado: 'TIPO',\n  datos: {}\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -640
+      ],
+      "id": "aaa00001-fix1-4000-8000-000000000001",
+      "name": "Set Estado TIPO"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "Vamos a crear una solicitud\\. Selecciona el tipo:\n\n1\\. \\ud83d\\udda5\\ufe0f Soporte t\\u00e9cnico\n2\\. \\ud83d\\udccb Solicitud administrativa\n3\\. \\ud83d\\udcac Consulta general\n\n9\\. \\u274c Cancelar",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        -800
+      ],
+      "id": "aaa00002-fix1-4000-8000-000000000002",
+      "name": "Mostrar Menu Tipos",
+      "webhookId": "aaa00002-fix1-4000-8000-000000000002",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "\\u26a0\\ufe0f Opci\\u00f3n no v\\u00e1lida\\.\n\nPor favor escribe 1, 2, 3 o 9 para cancelar\\.",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        -208
+      ],
+      "id": "aaa00003-fix1-4000-8000-000000000003",
+      "name": "Tipo Invalido",
+      "webhookId": "aaa00003-fix1-4000-8000-000000000003",
+      "credentials": {
+        "telegramApi": {
+          "id": "R8QfekFZUILf3Of3",
+          "name": "Telegram account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -1388,19 +1450,19 @@
         ],
         [
           {
-            "node": "Guardar LOG",
+            "node": "Cancelar Solicitud",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Cancelar Solicitud",
+            "node": "Guardar LOG",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Guardar LOG",
+            "node": "Tipo Invalido",
             "type": "main",
             "index": 0
           }
@@ -1427,7 +1489,13 @@
             "index": 0
           }
         ],
-        [],
+        [
+          {
+            "node": "Router Tipo Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Guardar Prioridad",
@@ -1462,7 +1530,7 @@
       "main": [
         [
           {
-            "node": "Router Tipo Solicitud",
+            "node": "Set Estado TIPO",
             "type": "main",
             "index": 0
           }
@@ -1507,11 +1575,6 @@
     "Guardar Prioridad": {
       "main": [
         [
-          {
-            "node": "Cancelar Solicitud",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "If Prioridad Valida",
             "type": "main",
@@ -1718,11 +1781,6 @@
       "main": [
         [
           {
-            "node": "Router Tipo Solicitud",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Guardar LOG",
             "type": "main",
             "index": 0
@@ -1752,14 +1810,14 @@
       "main": [
         [
           {
-            "node": "Mostrar Confirmacion",
+            "node": "If Descripcion Cancelada",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "If Descripcion Cancelada",
+            "node": "Mostrar Confirmacion",
             "type": "main",
             "index": 0
           }
@@ -1796,6 +1854,39 @@
         [
           {
             "node": "Pedir Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Estado TIPO": {
+      "main": [
+        [
+          {
+            "node": "Mostrar Menu Tipos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mostrar Menu Tipos": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipo Invalido": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOG",
             "type": "main",
             "index": 0
           }
