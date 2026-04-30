@@ -395,11 +395,3 @@ Para que el flujo funcione correctamente, se deben configurar las siguientes cre
 4. En n8n, crear una credencial de tipo **"Google Sheets OAuth2 API"** e iniciar el flujo de autorizacion.
 5. Asignar esta credencial a todos los nodos de Google Sheets del flujo.
 6. Compartir el documento `HelpDeskBot_DB` con la cuenta de Google autorizada, con permisos de edicion.
-
----
-
-## Notas tecnicas
-
-- El estado de sesion de cada usuario se almacena en la memoria estatica global de n8n (`$getWorkflowStaticData('global')`). Esta memoria es volatil y se pierde si el proceso de n8n se reinicia. Para entornos de produccion con alta disponibilidad, se recomienda migrar la gestion de sesion a una base de datos externa como Redis o PostgreSQL.
-- El campo `chat_id` para enviar mensajes de Telegram se obtiene siempre desde el nodo `Leer sesion`, que es el unico nodo con acceso garantizado a ese valor en cualquier punto de la ejecucion del flujo.
-- Todos los nodos que leen datos del usuario en estados intermedios (como `Opciones de perfil` en estado `CONFIG`) deben referenciar el mensaje original desde `$('Leer sesion').first().json.mensaje` en lugar de `$json.mensaje`, dado que los nodos de Telegram no propagan el contexto del input anterior.
