@@ -61,7 +61,7 @@ Google Sheets actua como base de datos ligera. El documento `HelpDeskBot_DB` con
 
 El siguiente diagrama representa la arquitectura completa del flujo en n8n, incluyendo todos los estados de sesion, nodos de enrutamiento, ramas de validacion y puntos de escritura hacia Google Sheets.
 
-![Diagrama del flujo HelpDeskBot](./Captura_de_pantalla__126_.png)
+![Diagrama del flujo HelpDeskBot](/img/Captura%20de%20pantalla%20(126).png)
 
 ### Estados de sesion manejados por el Router
 
